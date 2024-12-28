@@ -3,7 +3,7 @@
 ## Démarrer le serveur Web Python 
 
 A l'aide d'un IDE ou d'un terminal avec "python3 Server.py"
-Le serveur démarre et écoute sur le port 8080.
+Le serveur démarre et écoute sur le port 8000.
 
 ## Démarrer le prgramme cible
 

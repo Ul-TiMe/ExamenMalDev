@@ -7,6 +7,6 @@
 
 
 // Déchiffre le shellcode à l'aide d'un XOR
-void decrypt_shellcode(char* shellcode, size_t size);
+void decrypt_shellcode(char* shellcode, char* decryptedShellcode, size_t size);
 
 #endif // CHIFFREMENT_H

